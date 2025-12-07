@@ -350,12 +350,16 @@ Symmetric matrices (**A = Aᵀ**) have special properties:
 ### 3. What can be the disadvantages of using PCA, and what strategies can be used to overcome these disadvantages?
 
 **Disadvantages:**
+
 1. **Loss of interpretability** — principal components are linear combinations of original features
+
 2. **Assumes linearity** — may not capture complex nonlinear relationships
+
 3. **Sensitive to scaling** — features must be standardized
 4. **Variance ≠ importance** — high-variance components aren't always most meaningful
 
 **Strategies to overcome:**
+
 - **Feature scaling:** Standardize data before applying PCA
 - **Kernel PCA:** Use kernel methods for nonlinear dimensionality reduction
 - **Sparse PCA:** Add sparsity constraints for better interpretability
@@ -365,11 +369,13 @@ Symmetric matrices (**A = Aᵀ**) have special properties:
 ### 4. What advantages does matrix diagonalization have in cryptography? How is it applied for encryption and decryption?
 
 **Advantages:**
+
 1. **Invertibility:** Diagonalization ensures the key matrix can be easily inverted
 2. **Computational efficiency:** Matrix operations become simpler with diagonal matrices
 3. **Mathematical foundation:** Provides rigorous theoretical basis for security
 
 **Application:**
+
 - **Encryption:** Message vector is multiplied by key matrix **K**
 - **Decryption:** Uses **K⁻¹ = PD⁻¹P⁻¹** where K = PDP⁻¹
 - The eigenvalue decomposition makes inversion computationally efficient
@@ -383,7 +389,9 @@ Symmetric matrices (**A = Aᵀ**) have special properties:
 This laboratory work demonstrated three powerful applications of eigenvalues and eigenvectors:
 
 1. **Direct computation** verified the fundamental equation A·v = λ·v
+
 2. **PCA for image compression** showed how dimensionality reduction preserves essential information
+
 3. **Cryptographic applications** illustrated how matrix diagonalization enables secure communication
 
 These examples highlight how **theoretical linear algebra concepts** translate into **practical real-world applications** across computer science, data science, and information security.

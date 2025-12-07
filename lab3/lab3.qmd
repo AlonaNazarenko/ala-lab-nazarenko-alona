@@ -1,0 +1,535 @@
+---
+title: "Lab 3. Singular Value Decomposition (SVD)"
+subtitle: "MATH 252: Applied Linear Algebra"
+author: 
+  - name: "Alona Nazarenko"
+    email: [anazarenko1@kse.org.ua]
+    affiliations: ["Kyiv School of Economics"]
+format:
+  html: 
+    highlight-style: github
+    theme: [default, ../custom.scss]
+---
+
+## Introduction
+
+In this lab, we explore **Singular Value Decomposition (SVD)** and its practical application in building a **movie recommendation system**. SVD is a fundamental matrix factorization technique that decomposes any matrix into three components, revealing the underlying structure of the data.
+
+The lab is divided into three main tasks:
+
+1. **Implementing SVD from scratch** using eigenvalue decomposition
+2. **Analyzing movie rating data** using SVD to understand user-movie relationships
+3. **Building a recommendation system** that predicts ratings and suggests movies to users
+
+Let's dive in! 🎬
+
+---
+
+## Data Preparation
+
+First, we import the necessary libraries. For this project, we'll use:
+- **NumPy** for numerical computations and matrix operations
+- **Matplotlib** for data visualization
+- **Pandas** for handling the MovieLens dataset
+
+```{python}
+#| label: libraries
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from mpl_toolkits.mplot3d import Axes3D
+```
+
+---
+
+## Task 1: Implementing SVD
+
+### Understanding SVD
+
+For any matrix $A \in \mathbb{R}^{m \times n}$, the **Singular Value Decomposition** expresses it as:
+
+$$A = U \Sigma V^T$$
+
+where:
+
+- $U \in \mathbb{R}^{m \times m}$ is an orthogonal matrix containing the **left singular vectors**
+- $\Sigma \in \mathbb{R}^{m \times n}$ is a diagonal matrix of **singular values** (non-negative, arranged in descending order)
+- $V^T \in \mathbb{R}^{n \times n}$ is an orthogonal matrix containing the **right singular vectors**
+
+### The Algorithm
+
+To compute SVD, we use the relationship between singular values and eigenvalues:
+
+1. Compute $S_L = AA^T$ and $S_R = A^TA$
+2. Find eigenvalues and eigenvectors of $S_L$ and $S_R$
+3. The singular values are $\sigma_i = \sqrt{\lambda_i}$
+4. Sort everything in descending order
+
+### Helper Function: Sorting Eigenvalues
+
+```{python}
+def sort_vectors(eigenval, eigenvec):
+    sort_index = np.argsort(eigenval, kind='mergesort')[::-1]
+    return eigenval[sort_index], eigenvec[:, sort_index]
+```
+
+### Main SVD Implementation
+
+```{python}
+def my_svd(A):
+    SL = A @ A.T
+    SR = A.T @ A
+
+    SL_val, SL_vec = np.linalg.eigh(SL)
+    SR_val, SR_vec = np.linalg.eigh(SR)
+
+    SL_val, U = sort_vectors(SL_val, SL_vec)
+    SR_val, V = sort_vectors(SR_val, SR_vec)
+
+    sing_val = np.sqrt(SL_val)
+
+    m, n = A.shape
+    r = min(m, n)
+    E = np.zeros((m,n))
+    E[np.arange(r), np.arange(r)] = sing_val[:r]
+
+    return U, E, V.T
+```
+
+### Testing the Implementation
+
+Let's test our SVD implementation on a random matrix:
+
+```{python}
+#| label: def_random
+#| include: false
+
+B = np.array([[2,0], [0, 1], [0, 0]])
+```
+
+```{python}
+#| label: def_display_matrix
+#| include: false
+from IPython.display import display, Math
+
+def matrix_to_latex(M, name="A"):
+    rows = [" & ".join(map(str, row)) for row in M]
+    body = r"\\ ".join(rows)
+    latex = rf"{name} = \begin{{bmatrix}} {body} \end{{bmatrix}}"
+    return latex
+
+```
+
+```{python}
+#| label: k_matrix
+#| echo: false
+k_latex = matrix_to_latex(B, "B")
+display(Math(k_latex))
+```
+
+```{python}
+#| label: test_svd
+U, E, V_t = my_svd(B)
+```
+
+```{python}
+#| label: matrix_U_E_V_t
+#| echo: false
+#| message: false
+
+u_latex = matrix_to_latex(U, "U")
+e_latex = matrix_to_latex(E, r"\sum_{}^{}")
+v_t_latex = matrix_to_latex(V_t, "V^t")
+display(Math(u_latex))
+```
+```{python}
+#| label: matrix_E
+#| echo: false
+#| message: false
+display(Math(e_latex))
+```
+```{python}
+#| label: matrix_V_t
+#| echo: false
+#| message: false
+display(Math(v_t_latex))
+```
+
+```{python}
+#| label: check
+#| message: false
+U @ E @ V_t
+```
+```{python}
+#| label: check_matrix
+#| echo: false
+#| message: false
+f_latex = matrix_to_latex(U @ E @ V_t, r"U @ \sum_{}^{} @ V^t")
+display(Math(f_latex))
+```
+
+
+**Mathematical Interpretation:**
+
+- $U$ represents the **user space** (rows of A)
+- $V^T$ represents the **item space** (columns of A)
+- $\Sigma$ represents the **importance** of each latent factor
+
+---
+
+## Task 2.a: Analyzing Movie Ratings with SVD
+
+### Loading the MovieLens Dataset
+
+We'll use the **MovieLens small dataset**, which contains movie ratings from various users.
+
+```{python}
+file_path = 'ml-latest-small/ratings.csv'
+df = pd.read_csv(file_path)
+
+df_p = df.pivot(index='userId', columns='movieId', values='rating')
+```
+
+### Data Cleaning Strategy
+
+The rating matrix is **sparse** — most users haven't rated most movies. We need to handle missing values carefully:
+
+```{python}
+df_p.dropna(thresh=150, axis=0, inplace=True)
+
+df_p.dropna(thresh=100, axis=1, inplace=True)
+
+fill_val = 2.5
+df_p.fillna(fill_val, inplace=True)
+```
+
+**Why this approach?**
+
+- Users/movies with too few ratings don't provide reliable patterns
+- Filling with 2.5 (middle of 0-5 scale) assumes neutral preference
+- This balances data availability with quality
+
+### Centering the Data
+
+To focus on **preference patterns** rather than absolute ratings, we subtract each user's mean rating:
+
+```{python}
+r = df_p.values
+user_mean = np.mean(r, axis=1)
+r = r - user_mean.reshape(-1, 1)
+```
+
+This transformation:
+
+- Removes individual user bias (some users rate generously, others strictly)
+- Highlights relative preferences
+- Improves SVD quality
+
+### Applying SVD with Dimensionality Reduction
+
+```{python}
+def task_2_a(A, k=0):
+    U, s, V_t = np.linalg.svd(A)
+    return U[:, :k], s[:k], V_t[:k, :]
+  
+k = 3
+U, s, V_t = task_2_a(r, k)
+```
+
+**What does k=3 mean?**
+
+- We're reducing the data to **3 latent dimensions**
+- These capture the most important patterns (e.g., "action lovers", "drama enthusiasts", "family-friendly")
+- Similar to PCA, but for collaborative filtering
+
+### Visualizing User and Movie Spaces
+
+Now comes the exciting part — visualizing users and movies in 3D space! 🎨
+
+```{python}
+#| label: comparison
+#| echo: false
+fig = plt.figure(figsize=(14, 6))
+titles = ['Users', 'Movies']
+camers = [None, [-164.5, 51.25]]
+for j, (mat, title, camera) in enumerate(zip([U[:15, :], V_t.T[: 15, :]], titles, camers), start=1):
+    ax = fig.add_subplot(1, 2, j, projection='3d')
+    
+    if camera is not None:
+        ax.view_init(elev=camera[0], azim=camera[1])
+
+    for i in range(mat.shape[0]):
+        x, y, z = mat[i]
+        ax.scatter(x, y, z, alpha=0.8)
+        ax.text(x, y, z, f'{title} {i}', size=10)
+
+plt.show()
+```
+
+**Interpretation:**
+
+- **Close users** have similar taste
+- **Close movies** are similar in nature
+- **Distance** = dissimilarity in preferences/characteristics
+- The 3 axes represent hidden "taste dimensions"
+
+---
+
+## Task 2.b: Building a Movie Recommendation System
+
+### The Recommendation Algorithm
+
+Our system works as follows:
+
+1. **Fill missing values** with column means (movie average ratings)
+2. **Center the data** by subtracting user means
+3. **Apply SVD** with automatic rank selection based on energy threshold
+4. **Reconstruct** the rating matrix
+5. **Add back** user means
+6. **Extract predictions** for unrated movies
+
+### Smart Rank Selection
+
+Instead of manually choosing $k$, we use **explained variance**:
+
+```{python}
+def prediction(df, nan = None, k = 0.9):
+    nan = df.mean() if nan is None else nan
+    df = df.fillna(nan)
+    C = df.values
+    user_mean = np.mean(C, axis=1) 
+    C = C - user_mean.reshape(-1, 1)
+    
+    if k <= 1:
+        U, s, V_t = np.linalg.svd(C)
+        cum = np.cumsum(s**2) / np.sum(s**2)
+        m = np.argmax(cum >= k) + 1
+        U = U[:, :m]
+        s = s[:m]
+        V_t = V_t[:m, :]
+    else:
+        U, s, V_t = task_2_a(C, k)
+        
+    E = np.zeros((U.shape[1], V_t.shape[0]))
+    r = s.shape[0]
+    E[np.arange(r), np.arange(r)] = s[:r]
+    K = (U @ E @ V_t) + user_mean.reshape(-1, 1)
+    
+    return pd.DataFrame(K, columns=df.columns, index=df.index)
+```
+
+**Key Innovation: Explained Variance**
+
+$$\text{Explained Variance} = \frac{\sum_{i=1}^{k} \sigma_i^2}{\sum_{i=1}^{r} \sigma_i^2}$$
+
+Setting $k=0.9$ means: "Use the minimum number of factors that explain 90% of the variance"
+
+### Before
+```{python}
+#| echo: false
+df_2 = df.pivot(index= 'userId', columns= 'movieId', values= 'rating')
+df_2.dropna(thresh=30, axis=1, inplace=True)
+df_2.dropna(thresh=20, axis=0, inplace=True)
+movie = pd.read_csv('ml-latest-small/movies.csv', index_col="movieId")
+df_2[:5]
+    
+
+```
+### After
+```{python}
+#| echo: false
+pred_1 = prediction(df_2)
+pred_1[df_2.isna()][:5]
+
+```
+
+### Making Recommendations
+
+```{python}
+def recommendation(user_id):
+    pred = prediction(df_2)
+    pred = pred[df_2.isna()]
+    user_id = user_id
+    row = pred.loc[user_id]
+    recom = row.nlargest(10).to_frame(name='rate_expected')
+    return recom.merge(movie, on="movieId", how='left').drop("rate_expected", axis= 1)
+
+recommendation(10)
+```
+
+**How it works:**
+
+1. SVD learns latent factors from observed ratings
+2. These factors capture patterns like "enjoys thrillers" or "prefers old classics"
+3. For unrated movies, we predict: $\hat{r}_{ui} = \bar{r}_u + u_i \cdot \Sigma \cdot v_m^T$
+4. Higher predicted ratings → better recommendations
+
+---
+
+## Mathematical Insights
+
+### Why SVD Works for Recommendations
+
+The key insight: **Matrix completion via low-rank approximation**
+
+Given incomplete matrix $R$ (ratings), we approximate:
+
+$$R \approx U_k \Sigma_k V_k^T$$
+
+where subscript $k$ means "top $k$ components only".
+
+**Why this works:**
+
+1. **Low-rank assumption:** User preferences are driven by few latent factors
+2. **Generalization:** By reducing dimensions, we denoise and generalize
+3. **Collaborative filtering:** Users with similar $U$ vectors like similar movies
+
+---
+
+# SVD Decomposition: Questions and Answers
+
+## Question 1: Main Stages of SVD and Application to Recommendations (0.5pts)
+
+### Main Stages of SVD
+
+For matrix $A \in \mathbb{R}^{m \times n}$:
+
+1. **Compute auxiliary matrices**: $S_L = AA^T$ and $S_R = A^TA$
+2. **Eigenvalue decomposition**: Find eigenvalues $\lambda_i$ and eigenvectors of $S_L$ and $S_R$
+3. **Extract singular values**: $\sigma_i = \sqrt{\lambda_i}$, sort descending
+4. **Construct matrices**: Build $U$ (left vectors), $\Sigma$ (diagonal), $V^T$ (right vectors)
+5. **Final form**: $A = U\Sigma V^T$
+
+### Application to Recommendation Systems
+
+**Pipeline:**
+
+1. **Preprocessing**: Fill missing ratings, center data (subtract user means)
+2. **Truncated SVD**: $R \approx U_k \Sigma_k V_k^T$ (keep top $k$ components)
+3. **Interpretation**: $U_k$ = user preferences, $V_k$ = item features in latent space
+4. **Prediction**: $\hat{r}_{ij} = u_i \cdot \Sigma_k \cdot v_j^T + \text{mean}_i$
+5. **Recommendation**: Rank unrated items by predicted scores, suggest top-N
+
+**Why it works:** Collaborative filtering through low-rank approximation captures user-item patterns and generalizes to missing entries.
+
+---
+
+## Question 2: Fields Where SVD is Applied (0.5pts)
+
+1. **Machine Learning**: Dimensionality reduction (PCA), feature extraction, clustering
+2. **Recommendation Systems**: Netflix, Amazon, Spotify collaborative filtering
+3. **NLP**: Latent Semantic Analysis, topic modeling, document similarity
+4. **Image Processing**: Compression (JPEG), face recognition (eigenfaces), denoising
+5. **Signal Processing**: Noise reduction, audio compression, biomedical signals
+6. **Finance**: Portfolio optimization, risk assessment, factor models
+7. **Bioinformatics**: Gene expression analysis, protein structure prediction
+8. **Social Networks**: Community detection, link prediction, influence modeling
+9. **Control Theory**: System identification, model reduction
+10. **Scientific Computing**: Solving linear systems, pseudoinverse, least squares
+
+---
+
+## Question 3: How Parameter k Affects SVD Results (0.5pts)
+
+Parameter $k$ determines how many singular values/vectors to retain in $A \approx U_k \Sigma_k V_k^T$.
+
+### Effects by k Value
+
+**Small k (high compression):**
+
+- **Pros**: Fast, removes noise, captures main patterns only
+- **Cons**: Loss of detail, underfitting, low accuracy
+- **Example**: $k=3$ for recommendations → only broad categories
+
+**Medium k (balanced):**
+
+- **Pros**: Good generalization, reasonable speed, captures key patterns
+- **Cons**: Requires tuning
+- **Example**: $k=20-50$ → optimal for most tasks
+
+**Large k (low compression):**
+
+- **Pros**: High accuracy, preserves details
+- **Cons**: Overfitting, includes noise, slow, doesn't generalize
+- **Example**: $k=200$ → memorizes training data
+
+### Key Relationship
+
+**Explained variance**: $\frac{\sum_{i=1}^{k} \sigma_i^2}{\sum_{i=1}^{r} \sigma_i^2}$
+
+**Choosing k:**
+
+- Use 90% variance threshold (most common)
+- Cross-validation on test set
+- Elbow method (plot error vs. k)
+
+**Trade-off**: Smaller $k$ = higher bias, lower variance; Larger $k$ = lower bias, higher variance
+
+---
+
+## Question 4: Advantages and Disadvantages of SVD (0.5pts)
+
+### ✅ Advantages
+
+**Mathematical:**
+
+- Always exists for any matrix
+- Numerically stable and well-understood
+- Optimal rank-k approximation (minimizes error)
+- Orthogonal matrices preserve structure
+
+**Practical:**
+
+- Reveals hidden patterns and latent factors
+- Dimensionality reduction and noise filtering
+- Efficient algorithms (well-optimized libraries)
+- Interpretable components
+- Works with incomplete data (after imputation)
+- Wide applicability across domains
+
+### ❌ Disadvantages
+
+**Computational:**
+
+- Expensive for large matrices: $O(mn^2)$ complexity
+- Memory intensive for full decomposition
+- Not suitable for streaming/online updates
+
+**Modeling:**
+
+- **Only linear relationships** (no complex patterns)
+- Cannot handle NaN directly (needs imputation)
+- Sensitive to outliers
+- Requires choosing $k$ (hyperparameter tuning)
+
+**Domain-specific:**
+
+- **Cold start problem** (new users/items in recommendations)
+- Popularity bias
+- No temporal dynamics
+- Non-sparse components (hard to interpret)
+- Outperformed by deep learning for complex tasks
+
+### When to Use
+
+**Use SVD:** Simple baseline, interpretable results, moderate data, mathematical guarantees needed
+
+**Use alternatives:** Non-linear patterns (neural networks), very large data (randomized methods), sparsity needed (NMF), streaming data (online algorithms)
+
+---
+
+## Summary
+
+SVD is a powerful, versatile technique that:
+
+- Decomposes matrices into interpretable components
+- Provides optimal low-rank approximations
+- Works well for recommendations, compression, and dimensionality reduction
+- Has limitations with non-linearity and very large-scale data
+- Serves as an excellent baseline before trying complex methods
+
+
+
+**🎬 The End 🎬**
+
+If you've made it this far, congratulations! You now understand how Netflix, Spotify, and Amazon recommend content. Keep exploring the fascinating world of linear algebra and machine learning! 🚀

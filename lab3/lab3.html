@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Alona Nazarenko">
+
+<title>Lab 3. Singular Value Decomposition (SVD)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="lab3_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lab3_files/libs/quarto-html/quarto.js"></script>
+<script src="lab3_files/libs/quarto-html/popper.min.js"></script>
+<script src="lab3_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="lab3_files/libs/quarto-html/anchor.min.js"></script>
+<link href="lab3_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lab3_files/libs/quarto-html/quarto-syntax-highlighting-5acf8c5931de092eec0692bfab2580a9.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="lab3_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="lab3_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="lab3_files/libs/bootstrap/bootstrap-d9628ea46a876bec918a9f5900129a61.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lab 3. Singular Value Decomposition (SVD)</h1>
+<p class="subtitle lead">MATH 252: Applied Linear Algebra</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Alona Nazarenko <a href="mailto:anazarenko1@kse.org.ua" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            Kyiv School of Economics
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>In this lab, we explore <strong>Singular Value Decomposition (SVD)</strong> and its practical application in building a <strong>movie recommendation system</strong>. SVD is a fundamental matrix factorization technique that decomposes any matrix into three components, revealing the underlying structure of the data.</p>
+<p>The lab is divided into three main tasks:</p>
+<ol type="1">
+<li><strong>Implementing SVD from scratch</strong> using eigenvalue decomposition</li>
+<li><strong>Analyzing movie rating data</strong> using SVD to understand user-movie relationships</li>
+<li><strong>Building a recommendation system</strong> that predicts ratings and suggests movies to users</li>
+</ol>
+<p>Let’s dive in! 🎬</p>
+<hr>
+</section>
+<section id="data-preparation" class="level2">
+<h2 class="anchored" data-anchor-id="data-preparation">Data Preparation</h2>
+<p>First, we import the necessary libraries. For this project, we’ll use: - <strong>NumPy</strong> for numerical computations and matrix operations - <strong>Matplotlib</strong> for data visualization - <strong>Pandas</strong> for handling the MovieLens dataset</p>
+<div id="libraries" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> mpl_toolkits.mplot3d <span class="im">import</span> Axes3D</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+</section>
+<section id="task-1-implementing-svd" class="level2">
+<h2 class="anchored" data-anchor-id="task-1-implementing-svd">Task 1: Implementing SVD</h2>
+<section id="understanding-svd" class="level3">
+<h3 class="anchored" data-anchor-id="understanding-svd">Understanding SVD</h3>
+<p>For any matrix <span class="math inline">\(A \in \mathbb{R}^{m \times n}\)</span>, the <strong>Singular Value Decomposition</strong> expresses it as:</p>
+<p><span class="math display">\[A = U \Sigma V^T\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(U \in \mathbb{R}^{m \times m}\)</span> is an orthogonal matrix containing the <strong>left singular vectors</strong></li>
+<li><span class="math inline">\(\Sigma \in \mathbb{R}^{m \times n}\)</span> is a diagonal matrix of <strong>singular values</strong> (non-negative, arranged in descending order)</li>
+<li><span class="math inline">\(V^T \in \mathbb{R}^{n \times n}\)</span> is an orthogonal matrix containing the <strong>right singular vectors</strong></li>
+</ul>
+</section>
+<section id="the-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="the-algorithm">The Algorithm</h3>
+<p>To compute SVD, we use the relationship between singular values and eigenvalues:</p>
+<ol type="1">
+<li>Compute <span class="math inline">\(S_L = AA^T\)</span> and <span class="math inline">\(S_R = A^TA\)</span></li>
+<li>Find eigenvalues and eigenvectors of <span class="math inline">\(S_L\)</span> and <span class="math inline">\(S_R\)</span></li>
+<li>The singular values are <span class="math inline">\(\sigma_i = \sqrt{\lambda_i}\)</span></li>
+<li>Sort everything in descending order</li>
+</ol>
+</section>
+<section id="helper-function-sorting-eigenvalues" class="level3">
+<h3 class="anchored" data-anchor-id="helper-function-sorting-eigenvalues">Helper Function: Sorting Eigenvalues</h3>
+<div id="69f63b93" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sort_vectors(eigenval, eigenvec):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    sort_index <span class="op">=</span> np.argsort(eigenval, kind<span class="op">=</span><span class="st">'mergesort'</span>)[::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> eigenval[sort_index], eigenvec[:, sort_index]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="main-svd-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="main-svd-implementation">Main SVD Implementation</h3>
+<div id="32011761" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> my_svd(A):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    SL <span class="op">=</span> A <span class="op">@</span> A.T</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    SR <span class="op">=</span> A.T <span class="op">@</span> A</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    SL_val, SL_vec <span class="op">=</span> np.linalg.eigh(SL)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    SR_val, SR_vec <span class="op">=</span> np.linalg.eigh(SR)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    SL_val, U <span class="op">=</span> sort_vectors(SL_val, SL_vec)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    SR_val, V <span class="op">=</span> sort_vectors(SR_val, SR_vec)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    sing_val <span class="op">=</span> np.sqrt(SL_val)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    m, n <span class="op">=</span> A.shape</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> <span class="bu">min</span>(m, n)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> np.zeros((m,n))</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    E[np.arange(r), np.arange(r)] <span class="op">=</span> sing_val[:r]</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> U, E, V.T</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="testing-the-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="testing-the-implementation">Testing the Implementation</h3>
+<p>Let’s test our SVD implementation on a random matrix:</p>
+<div id="cell-k_matrix" class="cell" data-execution_count="6">
+<div id="k_matrix" class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\displaystyle B = \begin{bmatrix} 2 &amp; 0\\ 0 &amp; 1\\ 0 &amp; 0 \end{bmatrix}\)</span></p>
+</div>
+</div>
+<div id="test_svd" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>U, E, V_t <span class="op">=</span> my_svd(B)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-matrix_U_E_V_t" class="cell" data-message="false" data-execution_count="8">
+<div id="matrix_u_e_v_t" class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\displaystyle U = \begin{bmatrix} 1.0 &amp; 0.0 &amp; 0.0\\ 0.0 &amp; 1.0 &amp; 0.0\\ 0.0 &amp; 0.0 &amp; 1.0 \end{bmatrix}\)</span></p>
+</div>
+</div>
+<div id="cell-matrix_E" class="cell" data-message="false" data-execution_count="9">
+<div id="matrix_e" class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\displaystyle \sum_{}^{} = \begin{bmatrix} 2.0 &amp; 0.0\\ 0.0 &amp; 1.0\\ 0.0 &amp; 0.0 \end{bmatrix}\)</span></p>
+</div>
+</div>
+<div id="cell-matrix_V_t" class="cell" data-message="false" data-execution_count="10">
+<div id="matrix_v_t" class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\displaystyle V^t = \begin{bmatrix} 1.0 &amp; 0.0\\ 0.0 &amp; 1.0 \end{bmatrix}\)</span></p>
+</div>
+</div>
+<div id="cell-check" class="cell" data-message="false" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>U <span class="op">@</span> E <span class="op">@</span> V_t</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="check" class="cell-output cell-output-display" data-execution_count="11">
+<pre><code>array([[2., 0.],
+       [0., 1.],
+       [0., 0.]])</code></pre>
+</div>
+</div>
+<div id="cell-check_matrix" class="cell" data-message="false" data-execution_count="12">
+<div id="check_matrix" class="cell-output cell-output-display cell-output-markdown">
+<p><span class="math inline">\(\displaystyle U @ \sum_{}^{} @ V^t = \begin{bmatrix} 2.0 &amp; 0.0\\ 0.0 &amp; 1.0\\ 0.0 &amp; 0.0 \end{bmatrix}\)</span></p>
+</div>
+</div>
+<p><strong>Mathematical Interpretation:</strong></p>
+<ul>
+<li><span class="math inline">\(U\)</span> represents the <strong>user space</strong> (rows of A)</li>
+<li><span class="math inline">\(V^T\)</span> represents the <strong>item space</strong> (columns of A)</li>
+<li><span class="math inline">\(\Sigma\)</span> represents the <strong>importance</strong> of each latent factor</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="task-2.a-analyzing-movie-ratings-with-svd" class="level2">
+<h2 class="anchored" data-anchor-id="task-2.a-analyzing-movie-ratings-with-svd">Task 2.a: Analyzing Movie Ratings with SVD</h2>
+<section id="loading-the-movielens-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="loading-the-movielens-dataset">Loading the MovieLens Dataset</h3>
+<p>We’ll use the <strong>MovieLens small dataset</strong>, which contains movie ratings from various users.</p>
+<div id="a41bae7a" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="op">=</span> <span class="st">'ml-latest-small/ratings.csv'</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(file_path)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>df_p <span class="op">=</span> df.pivot(index<span class="op">=</span><span class="st">'userId'</span>, columns<span class="op">=</span><span class="st">'movieId'</span>, values<span class="op">=</span><span class="st">'rating'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="data-cleaning-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="data-cleaning-strategy">Data Cleaning Strategy</h3>
+<p>The rating matrix is <strong>sparse</strong> — most users haven’t rated most movies. We need to handle missing values carefully:</p>
+<div id="213d9ab9" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>df_p.dropna(thresh<span class="op">=</span><span class="dv">150</span>, axis<span class="op">=</span><span class="dv">0</span>, inplace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>df_p.dropna(thresh<span class="op">=</span><span class="dv">100</span>, axis<span class="op">=</span><span class="dv">1</span>, inplace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>fill_val <span class="op">=</span> <span class="fl">2.5</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>df_p.fillna(fill_val, inplace<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Why this approach?</strong></p>
+<ul>
+<li>Users/movies with too few ratings don’t provide reliable patterns</li>
+<li>Filling with 2.5 (middle of 0-5 scale) assumes neutral preference</li>
+<li>This balances data availability with quality</li>
+</ul>
+</section>
+<section id="centering-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="centering-the-data">Centering the Data</h3>
+<p>To focus on <strong>preference patterns</strong> rather than absolute ratings, we subtract each user’s mean rating:</p>
+<div id="61198961" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> df_p.values</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>user_mean <span class="op">=</span> np.mean(r, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> r <span class="op">-</span> user_mean.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This transformation:</p>
+<ul>
+<li>Removes individual user bias (some users rate generously, others strictly)</li>
+<li>Highlights relative preferences</li>
+<li>Improves SVD quality</li>
+</ul>
+</section>
+<section id="applying-svd-with-dimensionality-reduction" class="level3">
+<h3 class="anchored" data-anchor-id="applying-svd-with-dimensionality-reduction">Applying SVD with Dimensionality Reduction</h3>
+<div id="42dcdb1f" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> task_2_a(A, k<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    U, s, V_t <span class="op">=</span> np.linalg.svd(A)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> U[:, :k], s[:k], V_t[:k, :]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>U, s, V_t <span class="op">=</span> task_2_a(r, k)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>What does k=3 mean?</strong></p>
+<ul>
+<li>We’re reducing the data to <strong>3 latent dimensions</strong></li>
+<li>These capture the most important patterns (e.g., “action lovers”, “drama enthusiasts”, “family-friendly”)</li>
+<li>Similar to PCA, but for collaborative filtering</li>
+</ul>
+</section>
+<section id="visualizing-user-and-movie-spaces" class="level3">
+<h3 class="anchored" data-anchor-id="visualizing-user-and-movie-spaces">Visualizing User and Movie Spaces</h3>
+<p>Now comes the exciting part — visualizing users and movies in 3D space! 🎨</p>
+<div id="cell-comparison" class="cell" data-execution_count="17">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="lab3_files/figure-html/comparison-output-1.png" id="comparison" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li><strong>Close users</strong> have similar taste</li>
+<li><strong>Close movies</strong> are similar in nature</li>
+<li><strong>Distance</strong> = dissimilarity in preferences/characteristics</li>
+<li>The 3 axes represent hidden “taste dimensions”</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="task-2.b-building-a-movie-recommendation-system" class="level2">
+<h2 class="anchored" data-anchor-id="task-2.b-building-a-movie-recommendation-system">Task 2.b: Building a Movie Recommendation System</h2>
+<section id="the-recommendation-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="the-recommendation-algorithm">The Recommendation Algorithm</h3>
+<p>Our system works as follows:</p>
+<ol type="1">
+<li><strong>Fill missing values</strong> with column means (movie average ratings)</li>
+<li><strong>Center the data</strong> by subtracting user means</li>
+<li><strong>Apply SVD</strong> with automatic rank selection based on energy threshold</li>
+<li><strong>Reconstruct</strong> the rating matrix</li>
+<li><strong>Add back</strong> user means</li>
+<li><strong>Extract predictions</strong> for unrated movies</li>
+</ol>
+</section>
+<section id="smart-rank-selection" class="level3">
+<h3 class="anchored" data-anchor-id="smart-rank-selection">Smart Rank Selection</h3>
+<p>Instead of manually choosing <span class="math inline">\(k\)</span>, we use <strong>explained variance</strong>:</p>
+<div id="6b147223" class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> prediction(df, nan <span class="op">=</span> <span class="va">None</span>, k <span class="op">=</span> <span class="fl">0.9</span>):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    nan <span class="op">=</span> df.mean() <span class="cf">if</span> nan <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> nan</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> df.fillna(nan)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> df.values</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    user_mean <span class="op">=</span> np.mean(C, axis<span class="op">=</span><span class="dv">1</span>) </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> C <span class="op">-</span> user_mean.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> k <span class="op">&lt;=</span> <span class="dv">1</span>:</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        U, s, V_t <span class="op">=</span> np.linalg.svd(C)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        cum <span class="op">=</span> np.cumsum(s<span class="op">**</span><span class="dv">2</span>) <span class="op">/</span> np.<span class="bu">sum</span>(s<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> np.argmax(cum <span class="op">&gt;=</span> k) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        U <span class="op">=</span> U[:, :m]</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> s[:m]</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        V_t <span class="op">=</span> V_t[:m, :]</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        U, s, V_t <span class="op">=</span> task_2_a(C, k)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> np.zeros((U.shape[<span class="dv">1</span>], V_t.shape[<span class="dv">0</span>]))</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> s.shape[<span class="dv">0</span>]</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    E[np.arange(r), np.arange(r)] <span class="op">=</span> s[:r]</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    K <span class="op">=</span> (U <span class="op">@</span> E <span class="op">@</span> V_t) <span class="op">+</span> user_mean.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(K, columns<span class="op">=</span>df.columns, index<span class="op">=</span>df.index)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Key Innovation: Explained Variance</strong></p>
+<p><span class="math display">\[\text{Explained Variance} = \frac{\sum_{i=1}^{k} \sigma_i^2}{\sum_{i=1}^{r} \sigma_i^2}\]</span></p>
+<p>Setting <span class="math inline">\(k=0.9\)</span> means: “Use the minimum number of factors that explain 90% of the variance”</p>
+</section>
+<section id="before" class="level3">
+<h3 class="anchored" data-anchor-id="before">Before</h3>
+<div id="fc262866" class="cell" data-execution_count="19">
+<div class="cell-output cell-output-display" data-execution_count="19">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">movieId</th>
+<th data-quarto-table-cell-role="th">1</th>
+<th data-quarto-table-cell-role="th">2</th>
+<th data-quarto-table-cell-role="th">3</th>
+<th data-quarto-table-cell-role="th">5</th>
+<th data-quarto-table-cell-role="th">6</th>
+<th data-quarto-table-cell-role="th">7</th>
+<th data-quarto-table-cell-role="th">10</th>
+<th data-quarto-table-cell-role="th">11</th>
+<th data-quarto-table-cell-role="th">16</th>
+<th data-quarto-table-cell-role="th">17</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">115617</th>
+<th data-quarto-table-cell-role="th">116797</th>
+<th data-quarto-table-cell-role="th">119145</th>
+<th data-quarto-table-cell-role="th">122882</th>
+<th data-quarto-table-cell-role="th">122886</th>
+<th data-quarto-table-cell-role="th">122904</th>
+<th data-quarto-table-cell-role="th">134130</th>
+<th data-quarto-table-cell-role="th">134853</th>
+<th data-quarto-table-cell-role="th">139385</th>
+<th data-quarto-table-cell-role="th">152081</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">userId</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1</td>
+<td>4.0</td>
+<td>NaN</td>
+<td>4.0</td>
+<td>NaN</td>
+<td>4.0</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5</td>
+<td>4.0</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">6</td>
+<td>NaN</td>
+<td>4.0</td>
+<td>5.0</td>
+<td>5.0</td>
+<td>4.0</td>
+<td>4.0</td>
+<td>3.0</td>
+<td>4.0</td>
+<td>4.0</td>
+<td>4.0</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7</td>
+<td>4.5</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 882 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="after" class="level3">
+<h3 class="anchored" data-anchor-id="after">After</h3>
+<div id="fead7084" class="cell" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">movieId</th>
+<th data-quarto-table-cell-role="th">1</th>
+<th data-quarto-table-cell-role="th">2</th>
+<th data-quarto-table-cell-role="th">3</th>
+<th data-quarto-table-cell-role="th">5</th>
+<th data-quarto-table-cell-role="th">6</th>
+<th data-quarto-table-cell-role="th">7</th>
+<th data-quarto-table-cell-role="th">10</th>
+<th data-quarto-table-cell-role="th">11</th>
+<th data-quarto-table-cell-role="th">16</th>
+<th data-quarto-table-cell-role="th">17</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">115617</th>
+<th data-quarto-table-cell-role="th">116797</th>
+<th data-quarto-table-cell-role="th">119145</th>
+<th data-quarto-table-cell-role="th">122882</th>
+<th data-quarto-table-cell-role="th">122886</th>
+<th data-quarto-table-cell-role="th">122904</th>
+<th data-quarto-table-cell-role="th">134130</th>
+<th data-quarto-table-cell-role="th">134853</th>
+<th data-quarto-table-cell-role="th">139385</th>
+<th data-quarto-table-cell-role="th">152081</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">userId</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1</td>
+<td>NaN</td>
+<td>3.402531</td>
+<td>NaN</td>
+<td>2.860778</td>
+<td>NaN</td>
+<td>2.946437</td>
+<td>3.274968</td>
+<td>4.140627</td>
+<td>3.998224</td>
+<td>3.718156</td>
+<td>...</td>
+<td>3.645491</td>
+<td>3.995931</td>
+<td>3.924835</td>
+<td>3.835713</td>
+<td>3.800209</td>
+<td>3.887143</td>
+<td>4.143191</td>
+<td>3.853104</td>
+<td>3.722208</td>
+<td>3.818209</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4</td>
+<td>4.143317</td>
+<td>3.371671</td>
+<td>3.314324</td>
+<td>3.071828</td>
+<td>3.886126</td>
+<td>3.271666</td>
+<td>3.539530</td>
+<td>3.618268</td>
+<td>3.818854</td>
+<td>3.897908</td>
+<td>...</td>
+<td>3.927001</td>
+<td>3.974588</td>
+<td>3.961041</td>
+<td>3.710147</td>
+<td>3.849181</td>
+<td>3.743878</td>
+<td>3.931599</td>
+<td>3.762733</td>
+<td>3.925855</td>
+<td>3.799043</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5</td>
+<td>NaN</td>
+<td>3.338904</td>
+<td>3.314259</td>
+<td>3.224598</td>
+<td>4.039200</td>
+<td>3.251222</td>
+<td>3.467915</td>
+<td>3.619174</td>
+<td>3.908149</td>
+<td>3.551068</td>
+<td>...</td>
+<td>3.748340</td>
+<td>4.048883</td>
+<td>4.045135</td>
+<td>3.734085</td>
+<td>3.702311</td>
+<td>3.910651</td>
+<td>3.970655</td>
+<td>3.598478</td>
+<td>3.889670</td>
+<td>3.912116</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">6</td>
+<td>4.127785</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>3.929962</td>
+<td>4.087376</td>
+<td>3.913267</td>
+<td>3.907488</td>
+<td>3.874578</td>
+<td>3.893652</td>
+<td>3.839682</td>
+<td>3.787867</td>
+<td>4.028682</td>
+<td>4.043308</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7</td>
+<td>NaN</td>
+<td>3.405149</td>
+<td>3.161952</td>
+<td>2.989116</td>
+<td>3.953542</td>
+<td>3.135282</td>
+<td>3.613710</td>
+<td>3.745771</td>
+<td>4.067082</td>
+<td>3.786177</td>
+<td>...</td>
+<td>4.005412</td>
+<td>3.948477</td>
+<td>3.848336</td>
+<td>3.827195</td>
+<td>3.551242</td>
+<td>3.980895</td>
+<td>3.872808</td>
+<td>3.737307</td>
+<td>4.187606</td>
+<td>3.900107</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 882 columns</p>
+</div>
+</div>
+</div>
+</section>
+<section id="making-recommendations" class="level3">
+<h3 class="anchored" data-anchor-id="making-recommendations">Making Recommendations</h3>
+<div id="0c3ed7f1" class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> recommendation(user_id):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    pred <span class="op">=</span> prediction(df_2)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    pred <span class="op">=</span> pred[df_2.isna()]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    user_id <span class="op">=</span> user_id</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> pred.loc[user_id]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    recom <span class="op">=</span> row.nlargest(<span class="dv">10</span>).to_frame(name<span class="op">=</span><span class="st">'rate_expected'</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> recom.merge(movie, on<span class="op">=</span><span class="st">"movieId"</span>, how<span class="op">=</span><span class="st">'left'</span>).drop(<span class="st">"rate_expected"</span>, axis<span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>recommendation(<span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">title</th>
+<th data-quarto-table-cell-role="th">genres</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">movieId</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4973</td>
+<td>Amelie (Fabuleux destin d'Amélie Poulain, Le) ...</td>
+<td>Comedy|Romance</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">858</td>
+<td>Godfather, The (1972)</td>
+<td>Crime|Drama</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">318</td>
+<td>Shawshank Redemption, The (1994)</td>
+<td>Crime|Drama</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1196</td>
+<td>Star Wars: Episode V - The Empire Strikes Back...</td>
+<td>Action|Adventure|Sci-Fi</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">260</td>
+<td>Star Wars: Episode IV - A New Hope (1977)</td>
+<td>Action|Adventure|Sci-Fi</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1197</td>
+<td>Princess Bride, The (1987)</td>
+<td>Action|Adventure|Comedy|Fantasy|Romance</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1208</td>
+<td>Apocalypse Now (1979)</td>
+<td>Action|Drama|War</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1210</td>
+<td>Star Wars: Episode VI - Return of the Jedi (1983)</td>
+<td>Action|Adventure|Sci-Fi</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">364</td>
+<td>Lion King, The (1994)</td>
+<td>Adventure|Animation|Children|Drama|Musical|IMAX</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1272</td>
+<td>Patton (1970)</td>
+<td>Drama|War</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p><strong>How it works:</strong></p>
+<ol type="1">
+<li>SVD learns latent factors from observed ratings</li>
+<li>These factors capture patterns like “enjoys thrillers” or “prefers old classics”</li>
+<li>For unrated movies, we predict: <span class="math inline">\(\hat{r}_{ui} = \bar{r}_u + u_i \cdot \Sigma \cdot v_m^T\)</span></li>
+<li>Higher predicted ratings → better recommendations</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="mathematical-insights" class="level2">
+<h2 class="anchored" data-anchor-id="mathematical-insights">Mathematical Insights</h2>
+<section id="why-svd-works-for-recommendations" class="level3">
+<h3 class="anchored" data-anchor-id="why-svd-works-for-recommendations">Why SVD Works for Recommendations</h3>
+<p>The key insight: <strong>Matrix completion via low-rank approximation</strong></p>
+<p>Given incomplete matrix <span class="math inline">\(R\)</span> (ratings), we approximate:</p>
+<p><span class="math display">\[R \approx U_k \Sigma_k V_k^T\]</span></p>
+<p>where subscript <span class="math inline">\(k\)</span> means “top <span class="math inline">\(k\)</span> components only”.</p>
+<p><strong>Why this works:</strong></p>
+<ol type="1">
+<li><strong>Low-rank assumption:</strong> User preferences are driven by few latent factors</li>
+<li><strong>Generalization:</strong> By reducing dimensions, we denoise and generalize</li>
+<li><strong>Collaborative filtering:</strong> Users with similar <span class="math inline">\(U\)</span> vectors like similar movies</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="svd-decomposition-questions-and-answers" class="level1">
+<h1>SVD Decomposition: Questions and Answers</h1>
+<section id="question-1-main-stages-of-svd-and-application-to-recommendations-0.5pts" class="level2">
+<h2 class="anchored" data-anchor-id="question-1-main-stages-of-svd-and-application-to-recommendations-0.5pts">Question 1: Main Stages of SVD and Application to Recommendations (0.5pts)</h2>
+<section id="main-stages-of-svd" class="level3">
+<h3 class="anchored" data-anchor-id="main-stages-of-svd">Main Stages of SVD</h3>
+<p>For matrix <span class="math inline">\(A \in \mathbb{R}^{m \times n}\)</span>:</p>
+<ol type="1">
+<li><strong>Compute auxiliary matrices</strong>: <span class="math inline">\(S_L = AA^T\)</span> and <span class="math inline">\(S_R = A^TA\)</span></li>
+<li><strong>Eigenvalue decomposition</strong>: Find eigenvalues <span class="math inline">\(\lambda_i\)</span> and eigenvectors of <span class="math inline">\(S_L\)</span> and <span class="math inline">\(S_R\)</span></li>
+<li><strong>Extract singular values</strong>: <span class="math inline">\(\sigma_i = \sqrt{\lambda_i}\)</span>, sort descending</li>
+<li><strong>Construct matrices</strong>: Build <span class="math inline">\(U\)</span> (left vectors), <span class="math inline">\(\Sigma\)</span> (diagonal), <span class="math inline">\(V^T\)</span> (right vectors)</li>
+<li><strong>Final form</strong>: <span class="math inline">\(A = U\Sigma V^T\)</span></li>
+</ol>
+</section>
+<section id="application-to-recommendation-systems" class="level3">
+<h3 class="anchored" data-anchor-id="application-to-recommendation-systems">Application to Recommendation Systems</h3>
+<p><strong>Pipeline:</strong></p>
+<ol type="1">
+<li><strong>Preprocessing</strong>: Fill missing ratings, center data (subtract user means)</li>
+<li><strong>Truncated SVD</strong>: <span class="math inline">\(R \approx U_k \Sigma_k V_k^T\)</span> (keep top <span class="math inline">\(k\)</span> components)</li>
+<li><strong>Interpretation</strong>: <span class="math inline">\(U_k\)</span> = user preferences, <span class="math inline">\(V_k\)</span> = item features in latent space</li>
+<li><strong>Prediction</strong>: <span class="math inline">\(\hat{r}_{ij} = u_i \cdot \Sigma_k \cdot v_j^T + \text{mean}_i\)</span></li>
+<li><strong>Recommendation</strong>: Rank unrated items by predicted scores, suggest top-N</li>
+</ol>
+<p><strong>Why it works:</strong> Collaborative filtering through low-rank approximation captures user-item patterns and generalizes to missing entries.</p>
+<hr>
+</section>
+</section>
+<section id="question-2-fields-where-svd-is-applied-0.5pts" class="level2">
+<h2 class="anchored" data-anchor-id="question-2-fields-where-svd-is-applied-0.5pts">Question 2: Fields Where SVD is Applied (0.5pts)</h2>
+<ol type="1">
+<li><strong>Machine Learning</strong>: Dimensionality reduction (PCA), feature extraction, clustering</li>
+<li><strong>Recommendation Systems</strong>: Netflix, Amazon, Spotify collaborative filtering</li>
+<li><strong>NLP</strong>: Latent Semantic Analysis, topic modeling, document similarity</li>
+<li><strong>Image Processing</strong>: Compression (JPEG), face recognition (eigenfaces), denoising</li>
+<li><strong>Signal Processing</strong>: Noise reduction, audio compression, biomedical signals</li>
+<li><strong>Finance</strong>: Portfolio optimization, risk assessment, factor models</li>
+<li><strong>Bioinformatics</strong>: Gene expression analysis, protein structure prediction</li>
+<li><strong>Social Networks</strong>: Community detection, link prediction, influence modeling</li>
+<li><strong>Control Theory</strong>: System identification, model reduction</li>
+<li><strong>Scientific Computing</strong>: Solving linear systems, pseudoinverse, least squares</li>
+</ol>
+<hr>
+</section>
+<section id="question-3-how-parameter-k-affects-svd-results-0.5pts" class="level2">
+<h2 class="anchored" data-anchor-id="question-3-how-parameter-k-affects-svd-results-0.5pts">Question 3: How Parameter k Affects SVD Results (0.5pts)</h2>
+<p>Parameter <span class="math inline">\(k\)</span> determines how many singular values/vectors to retain in <span class="math inline">\(A \approx U_k \Sigma_k V_k^T\)</span>.</p>
+<section id="effects-by-k-value" class="level3">
+<h3 class="anchored" data-anchor-id="effects-by-k-value">Effects by k Value</h3>
+<p><strong>Small k (high compression):</strong></p>
+<ul>
+<li><strong>Pros</strong>: Fast, removes noise, captures main patterns only</li>
+<li><strong>Cons</strong>: Loss of detail, underfitting, low accuracy</li>
+<li><strong>Example</strong>: <span class="math inline">\(k=3\)</span> for recommendations → only broad categories</li>
+</ul>
+<p><strong>Medium k (balanced):</strong></p>
+<ul>
+<li><strong>Pros</strong>: Good generalization, reasonable speed, captures key patterns</li>
+<li><strong>Cons</strong>: Requires tuning</li>
+<li><strong>Example</strong>: <span class="math inline">\(k=20-50\)</span> → optimal for most tasks</li>
+</ul>
+<p><strong>Large k (low compression):</strong></p>
+<ul>
+<li><strong>Pros</strong>: High accuracy, preserves details</li>
+<li><strong>Cons</strong>: Overfitting, includes noise, slow, doesn’t generalize</li>
+<li><strong>Example</strong>: <span class="math inline">\(k=200\)</span> → memorizes training data</li>
+</ul>
+</section>
+<section id="key-relationship" class="level3">
+<h3 class="anchored" data-anchor-id="key-relationship">Key Relationship</h3>
+<p><strong>Explained variance</strong>: <span class="math inline">\(\frac{\sum_{i=1}^{k} \sigma_i^2}{\sum_{i=1}^{r} \sigma_i^2}\)</span></p>
+<p><strong>Choosing k:</strong></p>
+<ul>
+<li>Use 90% variance threshold (most common)</li>
+<li>Cross-validation on test set</li>
+<li>Elbow method (plot error vs.&nbsp;k)</li>
+</ul>
+<p><strong>Trade-off</strong>: Smaller <span class="math inline">\(k\)</span> = higher bias, lower variance; Larger <span class="math inline">\(k\)</span> = lower bias, higher variance</p>
+<hr>
+</section>
+</section>
+<section id="question-4-advantages-and-disadvantages-of-svd-0.5pts" class="level2">
+<h2 class="anchored" data-anchor-id="question-4-advantages-and-disadvantages-of-svd-0.5pts">Question 4: Advantages and Disadvantages of SVD (0.5pts)</h2>
+<section id="advantages" class="level3">
+<h3 class="anchored" data-anchor-id="advantages">✅ Advantages</h3>
+<p><strong>Mathematical:</strong></p>
+<ul>
+<li>Always exists for any matrix</li>
+<li>Numerically stable and well-understood</li>
+<li>Optimal rank-k approximation (minimizes error)</li>
+<li>Orthogonal matrices preserve structure</li>
+</ul>
+<p><strong>Practical:</strong></p>
+<ul>
+<li>Reveals hidden patterns and latent factors</li>
+<li>Dimensionality reduction and noise filtering</li>
+<li>Efficient algorithms (well-optimized libraries)</li>
+<li>Interpretable components</li>
+<li>Works with incomplete data (after imputation)</li>
+<li>Wide applicability across domains</li>
+</ul>
+</section>
+<section id="disadvantages" class="level3">
+<h3 class="anchored" data-anchor-id="disadvantages">❌ Disadvantages</h3>
+<p><strong>Computational:</strong></p>
+<ul>
+<li>Expensive for large matrices: <span class="math inline">\(O(mn^2)\)</span> complexity</li>
+<li>Memory intensive for full decomposition</li>
+<li>Not suitable for streaming/online updates</li>
+</ul>
+<p><strong>Modeling:</strong></p>
+<ul>
+<li><strong>Only linear relationships</strong> (no complex patterns)</li>
+<li>Cannot handle NaN directly (needs imputation)</li>
+<li>Sensitive to outliers</li>
+<li>Requires choosing <span class="math inline">\(k\)</span> (hyperparameter tuning)</li>
+</ul>
+<p><strong>Domain-specific:</strong></p>
+<ul>
+<li><strong>Cold start problem</strong> (new users/items in recommendations)</li>
+<li>Popularity bias</li>
+<li>No temporal dynamics</li>
+<li>Non-sparse components (hard to interpret)</li>
+<li>Outperformed by deep learning for complex tasks</li>
+</ul>
+</section>
+<section id="when-to-use" class="level3">
+<h3 class="anchored" data-anchor-id="when-to-use">When to Use</h3>
+<p><strong>Use SVD:</strong> Simple baseline, interpretable results, moderate data, mathematical guarantees needed</p>
+<p><strong>Use alternatives:</strong> Non-linear patterns (neural networks), very large data (randomized methods), sparsity needed (NMF), streaming data (online algorithms)</p>
+<hr>
+</section>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>SVD is a powerful, versatile technique that:</p>
+<ul>
+<li>Decomposes matrices into interpretable components</li>
+<li>Provides optimal low-rank approximations</li>
+<li>Works well for recommendations, compression, and dimensionality reduction</li>
+<li>Has limitations with non-linearity and very large-scale data</li>
+<li>Serves as an excellent baseline before trying complex methods</li>
+</ul>
+<p><strong>🎬 The End 🎬</strong></p>
+<p>If you’ve made it this far, congratulations! You now understand how Netflix, Spotify, and Amazon recommend content. Keep exploring the fascinating world of linear algebra and machine learning! 🚀</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
